@@ -1,5 +1,9 @@
 # Philiprehberger.Outbox
 
+[![CI](https://github.com/philiprehberger/dotnet-outbox/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/dotnet-outbox/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/Philiprehberger.Outbox.svg)](https://www.nuget.org/packages/Philiprehberger.Outbox)
+[![License](https://img.shields.io/github/license/philiprehberger/dotnet-outbox)](LICENSE)
+
 Transactional outbox pattern implementation for reliable event/message publishing.
 
 ## Install
@@ -103,6 +107,12 @@ Implement `IOutboxStore` to persist messages in your database and `IOutboxDispat
 | Method | Description |
 |--------|-------------|
 | `AddOutbox(configure?)` | Register the outbox relay service and options |
+
+## Development
+
+```bash
+dotnet build src/Philiprehberger.Outbox.csproj --configuration Release
+```
 
 ## License
 
