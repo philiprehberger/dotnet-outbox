@@ -6,7 +6,7 @@
 
 Transactional outbox pattern implementation for reliable event/message publishing.
 
-## Install
+## Installation
 
 ```bash
 dotnet add package Philiprehberger.Outbox
