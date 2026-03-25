@@ -17,6 +17,7 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore src/Philiprehberger.Outbox.csproj
       - run: dotnet build src/Philiprehberger.Outbox.csproj --configuration Release --no-restore
+      - run: dotnet test tests/Philiprehberger.Outbox.Tests/Philiprehberger.Outbox.Tests.csproj --configuration Release --no-restore
 
   publish:
     needs: build
