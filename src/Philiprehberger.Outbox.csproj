@@ -7,9 +7,9 @@
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <PackageId>Philiprehberger.Outbox</PackageId>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <Authors>Philip Rehberger</Authors>
-    <Description>Transactional outbox pattern implementation for reliable event/message publishing</Description>
+    <Description>Transactional outbox pattern implementation for reliable event/message publishing.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/philiprehberger/dotnet-outbox</RepositoryUrl>
     <PackageTags>outbox;event;message;transactional;microservices;reliability</PackageTags>
