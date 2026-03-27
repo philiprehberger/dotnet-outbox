@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <PackageId>Philiprehberger.Outbox</PackageId>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <Authors>Philip Rehberger</Authors>
     <Description>Transactional outbox pattern implementation for reliable event/message publishing.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
