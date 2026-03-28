@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 (2026-03-27)
+
+- Add dead letter queue for messages exceeding max retries
+- Add message deduplication with idempotency keys
+- Add message priority levels (Low, Normal, High, Critical)
+- Add diagnostic events for message lifecycle observability
+
 ## 0.1.7 (2026-03-26)
 
 - Add Sponsor badge to README

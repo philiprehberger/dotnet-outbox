@@ -27,6 +27,8 @@ public class OutboxMessageTests
         Assert.Null(message.ProcessedAt);
         Assert.Null(message.Error);
         Assert.Equal(0, message.RetryCount);
+        Assert.Null(message.IdempotencyKey);
+        Assert.Equal(MessagePriority.Normal, message.Priority);
     }
 
     [Fact]
@@ -41,11 +43,15 @@ public class OutboxMessageTests
             DateTimeOffset.UtcNow,
             ProcessedAt: processedAt,
             Error: "some error",
-            RetryCount: 3);
+            RetryCount: 3,
+            IdempotencyKey: "dedup-123",
+            Priority: MessagePriority.High);
 
         Assert.Equal(processedAt, message.ProcessedAt);
         Assert.Equal("some error", message.Error);
         Assert.Equal(3, message.RetryCount);
+        Assert.Equal("dedup-123", message.IdempotencyKey);
+        Assert.Equal(MessagePriority.High, message.Priority);
     }
 
     [Fact]

@@ -14,6 +14,10 @@ public static class OutboxServiceCollectionExtensions
     /// You must also register an <see cref="IOutboxStore"/> and an <see cref="IOutboxDispatcher"/>
     /// implementation in the service collection.
     /// </para>
+    /// <para>
+    /// A <see cref="DeadLetterInMemoryStore"/> is registered as the default <see cref="IDeadLetterStore"/>
+    /// if no other implementation has been registered.
+    /// </para>
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configure">An optional action to configure <see cref="OutboxOptions"/>.</param>
@@ -26,6 +30,7 @@ public static class OutboxServiceCollectionExtensions
         configure?.Invoke(options);
 
         services.TryAddSingleton(options);
+        services.TryAddSingleton<IDeadLetterStore, DeadLetterInMemoryStore>();
         services.AddHostedService<OutboxRelayService>();
 
         return services;

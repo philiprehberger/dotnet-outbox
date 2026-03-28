@@ -6,13 +6,18 @@ namespace Philiprehberger.Outbox;
 /// <summary>
 /// Background hosted service that polls the outbox store for pending messages
 /// and dispatches them via the configured <see cref="IOutboxDispatcher"/>.
+/// Messages exceeding max retries are routed to the dead letter queue.
+/// Duplicate messages (by idempotency key) are skipped automatically.
+/// Messages are processed in priority order (highest first), then by creation time.
 /// </summary>
 public sealed class OutboxRelayService : IHostedService, IDisposable
 {
     private readonly IOutboxStore _store;
     private readonly IOutboxDispatcher _dispatcher;
+    private readonly IDeadLetterStore _deadLetterStore;
     private readonly OutboxOptions _options;
     private readonly ILogger<OutboxRelayService> _logger;
+    private readonly HashSet<string> _processedIdempotencyKeys = new();
     private Timer? _timer;
 
     /// <summary>
@@ -20,16 +25,19 @@ public sealed class OutboxRelayService : IHostedService, IDisposable
     /// </summary>
     /// <param name="store">The outbox message store.</param>
     /// <param name="dispatcher">The message dispatcher.</param>
+    /// <param name="deadLetterStore">The dead letter store for failed messages.</param>
     /// <param name="options">Configuration options.</param>
     /// <param name="logger">Logger instance.</param>
     public OutboxRelayService(
         IOutboxStore store,
         IOutboxDispatcher dispatcher,
+        IDeadLetterStore deadLetterStore,
         OutboxOptions options,
         ILogger<OutboxRelayService> logger)
     {
         _store = store;
         _dispatcher = dispatcher;
+        _deadLetterStore = deadLetterStore;
         _options = options;
         _logger = logger;
     }
@@ -66,7 +74,7 @@ public sealed class OutboxRelayService : IHostedService, IDisposable
         _timer?.Dispose();
     }
 
-    private async Task ProcessAsync(CancellationToken cancellationToken)
+    internal async Task ProcessAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -79,14 +87,33 @@ public sealed class OutboxRelayService : IHostedService, IDisposable
 
             _logger.LogDebug("Processing {Count} pending outbox messages", messages.Count);
 
-            foreach (var message in messages)
+            var ordered = messages
+                .OrderByDescending(m => m.Priority)
+                .ThenBy(m => m.CreatedAt);
+
+            foreach (var message in ordered)
             {
                 if (message.RetryCount >= _options.MaxRetries)
                 {
                     _logger.LogWarning(
-                        "Message {Id} exceeded max retries ({MaxRetries}), skipping",
+                        "Message {Id} exceeded max retries ({MaxRetries}), moving to dead letter queue",
                         message.Id,
                         _options.MaxRetries);
+
+                    await _deadLetterStore.AddAsync(message, cancellationToken);
+                    await _store.MarkProcessedAsync(message.Id, cancellationToken);
+                    OutboxDiagnostics.OnMessageDeadLettered(message);
+                    continue;
+                }
+
+                if (message.IdempotencyKey is not null && !_processedIdempotencyKeys.Add(message.IdempotencyKey))
+                {
+                    _logger.LogDebug(
+                        "Message {Id} skipped (duplicate idempotency key '{Key}')",
+                        message.Id,
+                        message.IdempotencyKey);
+
+                    await _store.MarkProcessedAsync(message.Id, cancellationToken);
                     continue;
                 }
 
@@ -95,12 +122,14 @@ public sealed class OutboxRelayService : IHostedService, IDisposable
                     await _dispatcher.DispatchAsync(message, cancellationToken);
                     await _store.MarkProcessedAsync(message.Id, cancellationToken);
 
+                    OutboxDiagnostics.OnMessageDispatched(message);
                     _logger.LogDebug("Message {Id} dispatched successfully", message.Id);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to dispatch message {Id} (attempt {Attempt})", message.Id, message.RetryCount + 1);
                     await _store.MarkFailedAsync(message.Id, ex.Message, cancellationToken);
+                    OutboxDiagnostics.OnMessageFailed(message);
                 }
             }
         }

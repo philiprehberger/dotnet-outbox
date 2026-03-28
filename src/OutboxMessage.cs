@@ -10,6 +10,8 @@ namespace Philiprehberger.Outbox;
 /// <param name="ProcessedAt">Timestamp when the message was successfully dispatched, or <c>null</c> if pending.</param>
 /// <param name="Error">The error message from the last failed dispatch attempt, or <c>null</c> if no error.</param>
 /// <param name="RetryCount">The number of dispatch attempts that have been made.</param>
+/// <param name="IdempotencyKey">An optional key for deduplication. Messages with the same key are dispatched only once.</param>
+/// <param name="Priority">The dispatch priority level. Higher-priority messages are processed first.</param>
 public record OutboxMessage(
     Guid Id,
     string Type,
@@ -17,4 +19,6 @@ public record OutboxMessage(
     DateTimeOffset CreatedAt,
     DateTimeOffset? ProcessedAt = null,
     string? Error = null,
-    int RetryCount = 0);
+    int RetryCount = 0,
+    string? IdempotencyKey = null,
+    MessagePriority Priority = MessagePriority.Normal);
